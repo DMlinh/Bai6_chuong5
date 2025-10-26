@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Context Menu</string>
+    <string name="app_title">Quản lý danh mục môn học</string>
+    <string name="monhoc_hinttitle">Nhập môn học</string>
+
+    <string-array name="armonhoc">
+        <item>Lập Trình Android</item>
+        <item>Lập Trình iOS</item>
+        <item>Lập Trình C#</item>
+        <item>Facebook Ads</item>
+        <item>Google Ads</item>
+        <item>Lập Trình Windows Phone</item>
+    </string-array>
+    
+    <string name="menu_add">Add</string>
+    <string name="menu_delete">Delete</string>
+    <string name="menu_uppercase">Uppercase</string>
+    <string name="menu_lowercase">Lowercase</string>
+</resources>

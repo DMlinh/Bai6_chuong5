@@ -1,0 +1,193 @@
+package com.example.bai6;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+public class MainActivity extends AppCompatActivity {
+
+    private EditText editTextMonHoc;
+    private ListView listViewMonHoc;
+    private ArrayList<String> danhSachMonHoc;
+    private ArrayAdapter<String> adapter;
+
+    // ID cho Context Menu Items
+    private static final int MENU_ADD = 1001;
+    private static final int MENU_DELETE = 1002;
+    private static final int MENU_UPPERCASE = 1003;
+    private static final int MENU_LOWERCASE = 1004;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        editTextMonHoc = findViewById(R.id.editTextMonHoc);
+        listViewMonHoc = findViewById(R.id.listViewMonHoc);
+
+        // 1. Khởi tạo danh sách từ strings.xml
+        String[] monHocArray = getResources().getStringArray(R.array.armonhoc);
+        danhSachMonHoc = new ArrayList<>(Arrays.asList(monHocArray));
+
+        // 2. Khởi tạo và gán Adapter cho ListView
+        adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_list_item_1, // Layout mặc định cho mỗi item
+                danhSachMonHoc);
+        listViewMonHoc.setAdapter(adapter);
+
+        // 3. Đăng ký Context Menu cho ListView
+        // BƯỚC QUAN TRỌNG ĐỂ KÍCH HOẠT NHẤN GIỮ (LONG PRESS)
+        registerForContextMenu(listViewMonHoc);
+
+        // 4. Thiết lập sự kiện click thông thường (để thực hiện Add)
+        // Khi người dùng bấm vào một item trong ListView, ta sẽ thực hiện Add theo yêu cầu
+        listViewMonHoc.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // Trong thực tế, chức năng "Add" thường được gán cho một nút bấm riêng.
+                // Tuy nhiên, theo yêu cầu trong Context Menu có chức năng "Add",
+                // nên ta sẽ thực hiện chức năng Add thông qua một action khác
+                // hoặc sửa lại yêu cầu là Add sẽ được kích hoạt thông qua một nút ảo (ví dụ, double click
+                // hoặc ở đây ta gán tạm cho Context Menu Item
+            }
+        });
+    }
+
+    // =================================================================
+    // PHẦN XỬ LÝ CONTEXT MENU (CONTEXT MENU IMPLEMENTATION)
+    // =================================================================
+
+    /**
+     * 1. Tạo Context Menu (khi nhấn giữ)
+     */
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        if (v.getId() == R.id.listViewMonHoc) {
+            // Lấy thông tin về item được nhấn giữ
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+            // Lấy tên môn học đang được chọn
+            String tenMonHoc = danhSachMonHoc.get(info.position);
+
+            menu.setHeaderTitle(tenMonHoc); // Đặt tiêu đề Context Menu là tên môn học
+            // Thêm 4 mục menu theo yêu cầu
+            menu.add(0, MENU_ADD, 0, getString(R.string.menu_add));
+            menu.add(0, MENU_DELETE, 1, getString(R.string.menu_delete));
+            menu.add(0, MENU_UPPERCASE, 2, getString(R.string.menu_uppercase));
+            menu.add(0, MENU_LOWERCASE, 3, getString(R.string.menu_lowercase));
+        }
+    }
+
+    /**
+     * 2. Xử lý khi chọn một mục trong Context Menu
+     */
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        // Lấy thông tin về item được chọn
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        // Lấy vị trí item trong danh sách
+        int position = info.position;
+        // Lấy tên môn học tại vị trí đó
+        String tenMonHoc = danhSachMonHoc.get(position);
+
+        switch (item.getItemId()) {
+            case MENU_ADD:
+                // Yêu cầu: "Chọn "Add": Thực hiện thêm môn học đã được nhập trên EditText vào ListView."
+                // Chức năng này sẽ được thực hiện tại đây.
+                themMonHoc();
+                return true;
+
+            case MENU_DELETE:
+                // Yêu cầu: "Chọn "Delete": Thực hiện xóa môn học đang được chọn trên ListView."
+                xoaMonHoc(position);
+                return true;
+
+            case MENU_UPPERCASE:
+                // Yêu cầu: "Chọn "Uppercase": Thực hiện chuyển tên môn học từ thường thành chữ hoa."
+                chuyenChuHoa(position, tenMonHoc);
+                return true;
+
+            case MENU_LOWERCASE:
+                // Yêu cầu: "Chọn "Lowercase": Thực hiện chuyển tên môn học từ chữ hoa thành chữ thường."
+                chuyenChuThuong(position, tenMonHoc);
+                return true;
+
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
+
+    // =================================================================
+    // CÁC HÀM XỬ LÝ CHỨC NĂNG (HELPER FUNCTIONS)
+    // =================================================================
+
+    /**
+     * Chức năng: Thêm môn học từ EditText vào danh sách
+     */
+    private void themMonHoc() {
+        String monHocMoi = editTextMonHoc.getText().toString().trim();
+
+        if (monHocMoi.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập tên môn học!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Thêm vào danh sách và thông báo cho Adapter cập nhật
+        danhSachMonHoc.add(monHocMoi);
+        adapter.notifyDataSetChanged();
+
+        // Xóa nội dung trong EditText sau khi thêm
+        editTextMonHoc.setText("");
+
+        Toast.makeText(this, "Đã thêm: " + monHocMoi, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Chức năng: Xóa môn học tại vị trí đã chọn
+     * @param position Vị trí item cần xóa
+     */
+    private void xoaMonHoc(int position) {
+        String monHocBiXoa = danhSachMonHoc.get(position);
+        danhSachMonHoc.remove(position);
+        adapter.notifyDataSetChanged();
+        Toast.makeText(this, "Đã xóa: " + monHocBiXoa, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Chức năng: Chuyển tên môn học thành chữ hoa
+     * @param position Vị trí item cần chuyển
+     * @param oldText Tên môn học cũ
+     */
+    private void chuyenChuHoa(int position, String oldText) {
+        String newText = oldText.toUpperCase();
+        danhSachMonHoc.set(position, newText);
+        adapter.notifyDataSetChanged();
+        Toast.makeText(this, "Đã chuyển thành: " + newText, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Chức năng: Chuyển tên môn học thành chữ thường
+     * @param position Vị trí item cần chuyển
+     * @param oldText Tên môn học cũ
+     */
+    private void chuyenChuThuong(int position, String oldText) {
+        String newText = oldText.toLowerCase();
+        danhSachMonHoc.set(position, newText);
+        adapter.notifyDataSetChanged();
+        Toast.makeText(this, "Đã chuyển thành: " + newText, Toast.LENGTH_SHORT).show();
+    }
+}
